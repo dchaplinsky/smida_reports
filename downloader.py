@@ -11,13 +11,18 @@ import requests
 
 def convert_params(doc):
     if isinstance(doc, dict):
+        new_doc = {}
+
         for d in doc:
+            new_k = d.lstrip("@")
             if d == "param" and isinstance(doc[d], (list, tuple)):
-                doc[d] = {
+                new_doc[new_k] = {
                     node["@name"]: node.get("#text") for node in doc[d]
                 }
             else:
-                doc[d] = convert_params(doc[d])
+                new_doc[new_k] = convert_params(doc[d])
+
+        doc = new_doc
     elif isinstance(doc, (list, tuple)):
         doc = [
             convert_params(d) for d in doc
@@ -36,6 +41,8 @@ def download_page(href, id_):
             s = fp.read()
             if s:
                 return xmltodict.parse(s)
+            else:
+                print("Cached response for {} is empty".format(href))
 
     r = requests.get("https://stockmarket.gov.ua/api/v1/{}".format(href))
 
